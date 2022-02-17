@@ -43,7 +43,7 @@ runs:
         echo "Current installed releases in namespace :"
         helm list
 
-       helm repo add repo ${{ inputs.HELM_CHART_REPO }}
+        helm repo add repo ${{ inputs.HELM_CHART_REPO }}
 
         echo "Installing/Updating release :"
         if ! helm upgrade --install ${{ inputs.PREFIX_NAME }} repo/${{ inputs.HELM_CHART_NAME }} --version ${{ inputs.HELM_CHART_VERSION }} --atomic --debug --wait --timeout ${{ inputs.TIMEOUT }} \
