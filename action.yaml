@@ -8,6 +8,12 @@ inputs:
   TIMEOUT:
     required: false
     default: "5m"
+  HELM_CHART_NAME:
+    required: true
+  HELM_CHART_REPO:
+    required: true
+  HELM_CHART_VERSION:
+    required: true
 
 #outputs:
 #  prefix_name:
@@ -37,10 +43,10 @@ runs:
         echo "Current installed releases in namespace :"
         helm list
 
-        helm dependency update helm/chart/
+       helm repo add repo ${{ inputs.HELM_CHART_REPO }}
 
         echo "Installing/Updating release :"
-        if ! helm upgrade --install ${{ inputs.PREFIX_NAME }} helm/chart --atomic --debug --wait --timeout ${{ inputs.TIMEOUT }} \
+        if ! helm upgrade --install ${{ inputs.PREFIX_NAME }} repo/${{ inputs.HELM_CHART_NAME }} --version ${{ inputs.HELM_CHART_VERSION }} --atomic --debug --wait --timeout ${{ inputs.TIMEOUT }} \
             ${{ inputs.HELM_VALUES_ARG }} \
             --set wordpress.image.tag=${{ inputs.IMAGE_TAG }} \
             --set frontend.image.tag=${{ inputs.IMAGE_TAG }} \
