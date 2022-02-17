@@ -15,7 +15,7 @@ inputs:
 #    value: ${{ steps.main.outputs.prefix_name }}
 
 runs:
-  using: "ubuntu-latest"
+  using: "composite"
   steps:
     ## For debug only
     #- shell: bash
