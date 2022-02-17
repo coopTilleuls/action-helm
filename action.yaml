@@ -1,0 +1,53 @@
+inputs:
+  PREFIX_NAME:
+    required: true
+  IMAGE_TAG:
+    required: true
+  HELM_VALUES_ARG:
+    required: true
+  TIMEOUT:
+    required: false
+    default: "5m"
+
+#outputs:
+#  prefix_name:
+#    description: "release/db prefix"
+#    value: ${{ steps.main.outputs.prefix_name }}
+
+runs:
+  using: "ubuntu-latest"
+  steps:
+    ## For debug only
+    #- shell: bash
+    #  run: |
+    #    base64 <<EOF
+    #    ${{ toJSON(inputs) }}
+    #    EOF
+    #- shell: bash
+    #  run: |
+    #    env | sort
+    - shell: bash
+      id: main
+      run: |
+        set -e
+
+        # test access
+        kubectl get pods
+
+        echo "Current installed releases in namespace :"
+        helm list
+
+        helm dependency update helm/chart/
+
+        echo "Installing/Updating release :"
+        if ! helm upgrade --install ${{ inputs.PREFIX_NAME }} helm/chart --atomic --debug --wait --timeout ${{ inputs.TIMEOUT }} \
+            ${{ inputs.HELM_VALUES_ARG }} \
+            --set wordpress.image.tag=${{ inputs.IMAGE_TAG }} \
+            --set frontend.image.tag=${{ inputs.IMAGE_TAG }} \
+          ; then
+          echo "Deployment has failed !"
+          echo "Here are the last events to help diagnose the problem :"
+          kubectl get events --sort-by .metadata.creationTimestamp
+          exit 1
+        fi
+        echo "Deployment successfull"
