@@ -8,17 +8,14 @@ inputs:
   TIMEOUT:
     required: false
     default: "5m"
-<<<<<<< HEAD
-  ACTION:
-=======
   HELM_CHART_NAME:
     required: true
   HELM_CHART_REPO:
     required: true
   HELM_CHART_VERSION:
->>>>>>> 8d8ec1f428c6bb269e8d9f012c9b34c6e6a429f8
     required: true
-
+  ACTION:
+    required: true
 #outputs:
 #  prefix_name:
 #    description: "release/db prefix"
@@ -36,6 +33,15 @@ runs:
         filters: |
           helm:
             - 'helm/**'
+    ## For debug only
+    #- shell: bash
+    #  run: |
+    #    base64 <<EOF
+    #    ${{ toJSON(inputs) }}
+    #    EOF
+    #- shell: bash
+    #  run: |
+    #    env | sort
     - shell: bash
       id: main
       run: |
@@ -43,14 +49,12 @@ runs:
 
         # test access
         kubectl get pods
-
-<<<<<<< HEAD
         if [ "${{ inputs.ACTION }}" == "install" ]; then
           echo "Current installed releases in namespace :"
           helm list
-          helm dependency update helm/chart/
+          helm repo add repo ${{ inputs.HELM_CHART_REPO }}
           echo "Installing/Updating release :"
-          if ! helm upgrade --install ${{ inputs.PREFIX_NAME }} helm/chart --atomic --debug --wait --timeout ${{ inputs.TIMEOUT }} \
+          if ! helm upgrade --install ${{ inputs.PREFIX_NAME }} repo/${{ inputs.HELM_CHART_NAME }} --version ${{ inputs.HELM_CHART_VERSION }} --atomic --debug --wait --timeout ${{ inputs.TIMEOUT }} \
               ${{ inputs.HELM_VALUES_ARG }} \
               --set wordpress.image.tag=${{ inputs.IMAGE_TAG }} \
               --set frontend.image.tag=${{ inputs.IMAGE_TAG }} \
@@ -60,8 +64,9 @@ runs:
             kubectl get events --sort-by .metadata.creationTimestamp
             exit 1
           fi
-         echo "Deployment successfull"
+          echo "Deployment successfull"
         fi
+        
         if [ "${{ inputs.ACTION }}" == "uninstall" ]; then
           echo "Current installed releases in namespace :"
           helm list
@@ -72,24 +77,8 @@ runs:
             exit 1
           fi
           echo "HELM uninstall successfull"
-=======
-        echo "Current installed releases in namespace :"
-        helm list
-
-       helm repo add repo ${{ inputs.HELM_CHART_REPO }}
-
-        echo "Installing/Updating release :"
-        if ! helm upgrade --install ${{ inputs.PREFIX_NAME }} repo/${{ inputs.HELM_CHART_NAME }} --version ${{ inputs.HELM_CHART_VERSION }} --atomic --debug --wait --timeout ${{ inputs.TIMEOUT }} \
-            ${{ inputs.HELM_VALUES_ARG }} \
-            --set wordpress.image.tag=${{ inputs.IMAGE_TAG }} \
-            --set frontend.image.tag=${{ inputs.IMAGE_TAG }} \
-          ; then
-          echo "Deployment has failed !"
-          echo "Here are the last events to help diagnose the problem :"
-          kubectl get events --sort-by .metadata.creationTimestamp
-          exit 1
->>>>>>> 8d8ec1f428c6bb269e8d9f012c9b34c6e6a429f8
         fi
+        
         if [ "${{ inputs.ACTION }}" == "check"]; then
           helm repo add repo ${{ steps.deploy_set_env.outputs.HELM_CHART_REPO }}
           helm template repo/${{ steps.deploy_set_env.outputs.HELM_CHART_NAME}} --version ${{ steps.deploy_set_env.outputs.HELM_CHART_VERSION }} ${{ steps.deploy_set_env.outputs.HELM_VALUES_ARG }} | yq e -s '"yq_tmp_" + $index' -
@@ -100,5 +89,20 @@ runs:
           # TODO: liveness/readiness on all apps
           done
           rm yq_tmp_*.yml
-       fi
+        fi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
