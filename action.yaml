@@ -8,6 +8,8 @@ inputs:
   TIMEOUT:
     required: false
     default: "5m"
+  ACTION:
+    required: true
 
 #outputs:
 #  prefix_name:
@@ -17,15 +19,15 @@ inputs:
 runs:
   using: "composite"
   steps:
-    ## For debug only
-    #- shell: bash
-    #  run: |
-    #    base64 <<EOF
-    #    ${{ toJSON(inputs) }}
-    #    EOF
-    #- shell: bash
-    #  run: |
-    #    env | sort
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - uses: dorny/paths-filter@v2
+      id: changes
+      with:
+        filters: |
+          helm:
+            - 'helm/**'
     - shell: bash
       id: main
       run: |
@@ -34,20 +36,43 @@ runs:
         # test access
         kubectl get pods
 
-        echo "Current installed releases in namespace :"
-        helm list
-
-        helm dependency update helm/chart/
-
-        echo "Installing/Updating release :"
-        if ! helm upgrade --install ${{ inputs.PREFIX_NAME }} helm/chart --atomic --debug --wait --timeout ${{ inputs.TIMEOUT }} \
-            ${{ inputs.HELM_VALUES_ARG }} \
-            --set wordpress.image.tag=${{ inputs.IMAGE_TAG }} \
-            --set frontend.image.tag=${{ inputs.IMAGE_TAG }} \
-          ; then
-          echo "Deployment has failed !"
-          echo "Here are the last events to help diagnose the problem :"
-          kubectl get events --sort-by .metadata.creationTimestamp
-          exit 1
+        if [ "${{ inputs.ACTION }}" == "install" ]; then
+          echo "Current installed releases in namespace :"
+          helm list
+          helm dependency update helm/chart/
+          echo "Installing/Updating release :"
+          if ! helm upgrade --install ${{ inputs.PREFIX_NAME }} helm/chart --atomic --debug --wait --timeout ${{ inputs.TIMEOUT }} \
+              ${{ inputs.HELM_VALUES_ARG }} \
+              --set wordpress.image.tag=${{ inputs.IMAGE_TAG }} \
+              --set frontend.image.tag=${{ inputs.IMAGE_TAG }} \
+            ; then
+            echo "Deployment has failed !"
+            echo "Here are the last events to help diagnose the problem :"
+            kubectl get events --sort-by .metadata.creationTimestamp
+            exit 1
+          fi
+         echo "Deployment successfull"
         fi
-        echo "Deployment successfull"
+        if [ "${{ inputs.ACTION }}" == "uninstall" ]; then
+          echo "Current installed releases in namespace :"
+          helm list
+          echo "Uninstalling release ${{ inputs.PREFIX_NAME }}"
+          if ! helm uninstall ${{ inputs.PREFIX_NAME }} --wait ; then
+            echo "HELM Uninstall has failed !"
+            echo "Please ask the SRE team to manually clean remaining objects"
+            exit 1
+          fi
+          echo "HELM uninstall successfull"
+        fi
+        if [ "${{ inputs.ACTION }}" == "check"]; then
+          helm repo add repo ${{ steps.deploy_set_env.outputs.HELM_CHART_REPO }}
+          helm template repo/${{ steps.deploy_set_env.outputs.HELM_CHART_NAME}} --version ${{ steps.deploy_set_env.outputs.HELM_CHART_VERSION }} ${{ steps.deploy_set_env.outputs.HELM_VALUES_ARG }} | yq e -s '"yq_tmp_" + $index' -
+          for file in yq_tmp_*.yml; do
+          echo "Checking if metadata.name is prefixed by release name on $(yq e '.kind + "/" + .metadata.name' $file)"
+          yq -C --exit-status e '.metadata.name | test("release-name-")' $file
+          # TODO: add more checks
+          # TODO: liveness/readiness on all apps
+          done
+          rm yq_tmp_*.yml
+       fi
+
