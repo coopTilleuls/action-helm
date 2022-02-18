@@ -47,9 +47,10 @@ runs:
       run: |
         set -e
 
-        # test access
-        kubectl get pods
+        
         if [ "${{ inputs.ACTION }}" == "install" ]; then
+          # test access
+          kubectl get pods
           echo "Current installed releases in namespace :"
           helm list
           helm repo add repo ${{ inputs.HELM_CHART_REPO }}
@@ -68,6 +69,8 @@ runs:
         fi
         
         if [ "${{ inputs.ACTION }}" == "uninstall" ]; then
+          # test access
+          kubectl get pods
           echo "Current installed releases in namespace :"
           helm list
           echo "Uninstalling release ${{ inputs.PREFIX_NAME }}"
