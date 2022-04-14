@@ -8,14 +8,9 @@ inputs:
   TIMEOUT:
     required: false
     default: "5m"
-  HELM_CHART_NAME:
-    required: true
-  HELM_CHART_REPO:
-    required: true
-  HELM_CHART_VERSION:
-    required: true
   ACTION:
     required: true
+
 #outputs:
 #  prefix_name:
 #    description: "release/db prefix"
@@ -47,19 +42,48 @@ runs:
       run: |
         set -e
 
+        # set helm values file
+        if [ -f helm/chart/values.yaml ]; then
+          HELM_ARG="$HELM_ARG -f helm/chart/values.yaml"
+        fi
+        if [ -f helm/chart/values-$PREFIX_NAME.yaml ]; then
+          HELM_ARG="$HELM_ARG -f helm/chart/values-$PREFIX_NAME.yaml"
+        else
+          if [ -f helm/chart/values-pullrequest.yaml ]; then
+            HELM_ARG="$HELM_ARG -f helm/chart/values-pullrequest.yaml"
+          fi
+        fi
+
+        # HELM chart information
+        if [ ! -f helm/chart/HELM_ENV ]; then
+          echo "helm/chart/HELM_ENV is missing, couldn’t find chart informations" 1>&2
+          exit 1
+        else
+          source helm/chart/HELM_ENV
+          if [ -z "$HELM_CHART_REPO" ]; then
+            echo "Missing HELM_CHART_REPO in helm/chart/HELM_ENV file" 1>&2
+            exit 1
+          fi
+          if [ -z "$HELM_CHART_NAME" ]; then
+            echo "Missing HELM_CHART_NAME in helm/chart/HELM_ENV file" 1>&2
+            exit 1
+          fi
+          if [ -z "$HELM_CHART_VERSION" ]; then
+            echo "Missing HELM_CHART_VERSION in helm/chart/HELM_ENV file" 1>&2
+            exit 1
+          fi
+        fi
         
         if [ "${{ inputs.ACTION }}" == "install" ]; then
           # test access
           kubectl get pods
           echo "Current installed releases in namespace :"
           helm list
-          helm repo add repo ${{ inputs.HELM_CHART_REPO }}
+          helm repo add repo $HELM_CHART_REPO
           echo "Installing/Updating release :"
-          if ! helm upgrade --install ${{ inputs.PREFIX_NAME }} repo/${{ inputs.HELM_CHART_NAME }} --version ${{ inputs.HELM_CHART_VERSION }} --atomic --debug --wait --timeout ${{ inputs.TIMEOUT }} \
+          if ! helm upgrade --install ${{ inputs.PREFIX_NAME }} repo/$HELM_CHART_NAME --version $HELM_CHART_VERSION --atomic --debug --wait --timeout ${{ inputs.TIMEOUT }} \
               ${{ inputs.HELM_VALUES_ARG }} \
-              --set wordpress.image.tag=${{ inputs.IMAGE_TAG }} \
-              --set frontend.image.tag=${{ inputs.IMAGE_TAG }} \
-            ; then
+              $HELM_ARG ; then
             echo "Deployment has failed !"
             echo "Here are the last events to help diagnose the problem :"
             kubectl get events --sort-by .metadata.creationTimestamp
@@ -83,17 +107,18 @@ runs:
         fi
         
         if [ "${{ inputs.ACTION }}" == "check"]; then
-          helm repo add repo ${{ steps.deploy_set_env.outputs.HELM_CHART_REPO }}
-          helm template repo/${{ steps.deploy_set_env.outputs.HELM_CHART_NAME}} --version ${{ steps.deploy_set_env.outputs.HELM_CHART_VERSION }} ${{ steps.deploy_set_env.outputs.HELM_VALUES_ARG }} | yq e -s '"yq_tmp_" + $index' -
+          helm repo add repo $HELM_CHART_REPO
+          helm template repo/$HELM_CHART_NAME --version $HELM_CHART_VERSION \
+            ${{ inputs.HELM_VALUES_ARG }} \
+            $HELM_ARG | yq e -s '"yq_tmp_" + $index' -
           for file in yq_tmp_*.yml; do
-          echo "Checking if metadata.name is prefixed by release name on $(yq e '.kind + "/" + .metadata.name' $file)"
-          yq -C --exit-status e '.metadata.name | test("release-name-")' $file
-          # TODO: add more checks
-          # TODO: liveness/readiness on all apps
+            echo "Checking if metadata.name is prefixed by release name on $(yq e '.kind + "/" + .metadata.name' $file)"
+            yq -C --exit-status e '.metadata.name | test("release-name-")' $file
+            # TODO: add more checks
+            # TODO: liveness/readiness on all apps
           done
           rm yq_tmp_*.yml
         fi
-
 
 
 
