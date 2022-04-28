@@ -40,7 +40,7 @@ runs:
     - shell: bash
       id: main
       run: |
-        set -e
+        set -ex
 
         # set helm values file
         if [ -f helm/chart/values.yaml ]; then
