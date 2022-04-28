@@ -19,8 +19,8 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+    #- name: Checkout code
+    #  uses: actions/checkout@v2
 
     - uses: dorny/paths-filter@v2
       id: changes
@@ -41,6 +41,7 @@ runs:
       id: main
       run: |
         set -ex
+        export PREFIX_NAME=${{ inputs.PREFIX_NAME }}
 
         # set helm values file
         if [ -f helm/chart/values.yaml ]; then
@@ -80,6 +81,7 @@ runs:
           echo "Current installed releases in namespace :"
           helm list
           helm repo add repo $HELM_CHART_REPO
+          cat helm/chart/values*.yaml
           echo "Installing/Updating release :"
           if ! helm upgrade --install ${{ inputs.PREFIX_NAME }} repo/$HELM_CHART_NAME --version $HELM_CHART_VERSION --atomic --debug --wait --timeout ${{ inputs.TIMEOUT }} \
               ${{ inputs.HELM_VALUES_ARG }} \
