@@ -108,7 +108,7 @@ runs:
           echo "HELM uninstall successfull"
         fi
         
-        if [ "${{ inputs.ACTION }}" == "check"]; then
+        if [ "${{ inputs.ACTION }}" == "check" ]; then
           helm repo add repo $HELM_CHART_REPO
           helm template repo/$HELM_CHART_NAME --version $HELM_CHART_VERSION \
             ${{ inputs.HELM_VALUES_ARG }} \
