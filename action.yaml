@@ -80,6 +80,7 @@ runs:
           HELM_CHART_OPTIONS="repo/$HELM_CHART_NAME --version $HELM_CHART_VERSION"
         else
           HELM_CHART_OPTIONS="$HELM_CHART_NAME"
+          helm dependency build $HELM_CHART_NAME
         fi
         
         if [ "${{ inputs.ACTION }}" == "install" ]; then
