@@ -57,8 +57,8 @@ runs:
 
         # HELM chart information
         if [ ! -f helm/chart/HELM_ENV ]; then
-          echo "helm/chart/HELM_ENV is missing, couldn’t find chart informations" 1>&2
-          exit 1
+          echo "helm/chart/HELM_ENV is missing, using local chart instead" 1>&2
+          HELM_CHART_NAME=helm/chart/
         else
           source helm/chart/HELM_ENV
           if [ -z "$HELM_CHART_REPO" ]; then
@@ -75,15 +75,21 @@ runs:
           fi
         fi
         
+        if [ -n "$HELM_CHART_REPO" ] ; then
+          helm repo add repo $HELM_CHART_REPO
+          HELM_CHART_OPTIONS="repo/$HELM_CHART_NAME --version $HELM_CHART_VERSION"
+        else
+          HELM_CHART_OPTIONS="$HELM_CHART_NAME"
+        fi
+        
         if [ "${{ inputs.ACTION }}" == "install" ]; then
           # test access
           kubectl get pods
           echo "Current installed releases in namespace :"
           helm list
-          helm repo add repo $HELM_CHART_REPO
           cat helm/chart/values*.yaml
           echo "Installing/Updating release :"
-          if ! helm upgrade --install ${{ inputs.PREFIX_NAME }} repo/$HELM_CHART_NAME --version $HELM_CHART_VERSION --atomic --debug --wait --timeout ${{ inputs.TIMEOUT }} \
+          if ! helm upgrade --install ${{ inputs.PREFIX_NAME }} $HELM_CHART_OPTIONS --atomic --debug --wait --timeout ${{ inputs.TIMEOUT }} \
               ${{ inputs.HELM_VALUES_ARG }} \
               $HELM_ARG ; then
             echo "Deployment has failed !"
@@ -109,8 +115,7 @@ runs:
         fi
         
         if [ "${{ inputs.ACTION }}" == "check" ]; then
-          helm repo add repo $HELM_CHART_REPO
-          helm template repo/$HELM_CHART_NAME --version $HELM_CHART_VERSION \
+          helm template $HELM_CHART_OPTIONS \
             ${{ inputs.HELM_VALUES_ARG }} \
             $HELM_ARG | yq e -s '"yq_tmp_" + $index' -
           for file in yq_tmp_*.yml; do
