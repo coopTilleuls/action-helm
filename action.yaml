@@ -11,10 +11,10 @@ inputs:
   ACTION:
     required: true
 
-#outputs:
-#  prefix_name:
-#    description: "release/db prefix"
-#    value: ${{ steps.main.outputs.prefix_name }}
+outputs:
+  INGRESS_HOSTS_JSON:
+    description: "JSON of Ingress hosts"
+    value: ${{ steps.main.outputs.INGRESS_HOSTS_JSON }}
 
 runs:
   using: "composite"
@@ -99,6 +99,9 @@ runs:
             exit 1
           fi
           echo "Deployment successfull"
+          # getting Ingress hosts :
+          INGRESS_HOSTS_JSON=$(helm get manifest ${{ inputs.PREFIX_NAME }} | yq ea '[. | select(.kind=="Ingress") | .spec.rules[].host ]' --output-format=json -I 0)
+          echo "::set-output name=INGRESS_HOSTS_JSON::$INGRESS_HOSTS_JSON"
         fi
         
         if [ "${{ inputs.ACTION }}" == "uninstall" ]; then
