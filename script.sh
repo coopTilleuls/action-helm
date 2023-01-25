@@ -48,9 +48,9 @@ if [ "$ACTION" == "install" ]; then
     kubectl get pods
     echo "Current installed releases in namespace:"
     helm list
-    cat helm/chart/values*.yaml
     echo "Installing/Updating release:"
-    if ! helm upgrade --install $PREFIX_NAME $HELM_CHART_OPTIONS --atomic --debug --wait --timeout $TIMEOUT \
+    # sed is used to rm USER-SUPPLIED VALUES from helm debug
+    if ! helm upgrade --install $PREFIX_NAME $HELM_CHART_OPTIONS --atomic --debug --wait --timeout $TIMEOUT | sed --unbuffered '/USER-SUPPLIED VALUES/,$d' \
         $HELM_VALUES_ARG \
         $HELM_ARG ; then
     echo "Deployment has failed!"
