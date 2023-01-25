@@ -16,11 +16,11 @@ else
 fi
 
 # Helm chart information
-if [ ! -f helm/chart/HELM_ENV ]; then
+if [ ! -f ../helm/chart/HELM_ENV ]; then
     echo "helm/chart/HELM_ENV is missing, using local chart instead" 1>&2
     HELM_CHART_NAME=helm/chart/
 else
-    source helm/chart/HELM_ENV
+    source ../helm/chart/HELM_ENV
     if [ -z "$HELM_CHART_REPO" ]; then
     echo "Missing HELM_CHART_REPO in helm/chart/HELM_ENV file" 1>&2
     exit 1
