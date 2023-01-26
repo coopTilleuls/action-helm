@@ -32,6 +32,7 @@ runs:
     #  run: |
     #    env | sort
     - shell: bash
+      id: main
       # a checkout action of `coopTilleuls/action-helm` must be set with `path: 'action-helm'`
       run: |
         set -e
