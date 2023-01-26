@@ -51,9 +51,10 @@ if [ "$ACTION" == "install" ]; then
 
     echo "Installing/Updating release:"
     # sed is used to rm USER-SUPPLIED VALUES from helm debug
-    if ! helm upgrade --install $PREFIX_NAME $HELM_CHART_OPTIONS --atomic --debug --wait --timeout $TIMEOUT | sed --unbuffered '/USER-SUPPLIED VALUES/,$d' \
+    if ! helm upgrade --install $PREFIX_NAME $HELM_CHART_OPTIONS --atomic --debug --wait --timeout $TIMEOUT \
         $HELM_VALUES_ARG \
-        $HELM_ARG ; then
+        $HELM_ARG \
+        | sed --unbuffered '/USER-SUPPLIED VALUES/,$d' ; then
     echo "Deployment has failed!"
     echo "Here are the last events to help diagnose the problem:"
     kubectl get events --sort-by .metadata.creationTimestamp
