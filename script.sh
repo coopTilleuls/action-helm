@@ -4,14 +4,14 @@ set -ex
 export PREFIX_NAME=$PREFIX_NAME
 
 # set helm values file
-if [ -f helm/chart/values.yaml ]; then
-    HELM_ARG="$HELM_ARG -f helm/chart/values.yaml"
+if [ -f ../helm/chart/values.yaml ]; then
+    HELM_ARG="$HELM_ARG -f ../helm/chart/values.yaml"
 fi
-if [ -f helm/chart/values-$PREFIX_NAME.yaml ]; then
-    HELM_ARG="$HELM_ARG -f helm/chart/values-$PREFIX_NAME.yaml"
+if [ -f ../helm/chart/values-$PREFIX_NAME.yaml ]; then
+    HELM_ARG="$HELM_ARG -f ../helm/chart/values-$PREFIX_NAME.yaml"
 else
-    if [ -f helm/chart/values-pullrequest.yaml ]; then
-    HELM_ARG="$HELM_ARG -f helm/chart/values-pullrequest.yaml"
+    if [ -f ../helm/chart/values-pullrequest.yaml ]; then
+    HELM_ARG="$HELM_ARG -f ../helm/chart/values-pullrequest.yaml"
     fi
 fi
 
@@ -48,6 +48,7 @@ if [ "$ACTION" == "install" ]; then
     kubectl get pods
     echo "Current installed releases in namespace:"
     helm list
+
     echo "Installing/Updating release:"
     # sed is used to rm USER-SUPPLIED VALUES from helm debug
     if ! helm upgrade --install $PREFIX_NAME $HELM_CHART_OPTIONS --atomic --debug --wait --timeout $TIMEOUT | sed --unbuffered '/USER-SUPPLIED VALUES/,$d' \
