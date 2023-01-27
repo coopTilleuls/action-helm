@@ -62,7 +62,7 @@ if [ "$ACTION" == "install" ]; then
     fi
     echo "Deployment successful"
     # getting Ingress hosts :
-    export INGRESS_HOSTS_JSON=$(helm get manifest $PREFIX_NAME | yq ea '[. | select(.kind=="Ingress") | .spec.rules[].host ]' --output-format=json -I 0)
+    echo INGRESS_HOSTS_JSON=$(helm get manifest $PREFIX_NAME | yq ea '[. | select(.kind=="Ingress") | .spec.rules[].host ]' --output-format=json -I 0) >> $GITHUB_OUTPUT
 fi
 
 if [ "$ACTION" == "uninstall" ]; then
