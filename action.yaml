@@ -39,6 +39,7 @@ runs:
         cd action-helm
         bash script.sh
         echo "githubé té teubé ou pas ?"
+        echo "FOO=BAR" >> $GITHUB_OUTPUT
         echo "INGRESS_HOSTS_JSON=${INGRESS_HOSTS_JSON}" >> $GITHUB_OUTPUT
         # TODO: rm debug
         echo $GITHUB_OUTPUT
