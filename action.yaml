@@ -39,6 +39,8 @@ runs:
         cd action-helm
         bash script.sh
         echo "INGRESS_HOSTS_JSON=${INGRESS_HOSTS_JSON}" >> $GITHUB_OUTPUT
+        # TODO: rm debug
+        echo $GITHUB_OUTPUT
       env:
         PREFIX_NAME: ${{ inputs.PREFIX_NAME }}
         ACTION: ${{ inputs.ACTION }}
