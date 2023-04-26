@@ -5,6 +5,9 @@ inputs:
     required: true
   HELM_VALUES_ARG:
     required: true
+  CHART_DIR:
+    required: false
+    default: "helm/chart"
   TIMEOUT:
     required: false
     default: "5m"
@@ -43,6 +46,7 @@ runs:
         ACTION: ${{ inputs.ACTION }}
         TIMEOUT: ${{ inputs.TIMEOUT }}
         HELM_VALUES_ARG: ${{ inputs.HELM_VALUES_ARG }}
+        CHART_DIR: ${{ inputs.CHART_DIR }}
 
 
 

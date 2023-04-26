@@ -4,33 +4,33 @@ set -ex
 export PREFIX_NAME=$PREFIX_NAME
 
 # set helm values file
-if [ -f ../helm/chart/values.yaml ]; then
-    HELM_ARG="$HELM_ARG -f ../helm/chart/values.yaml"
+if [ -f ../${CHART_DIR}/values.yaml ]; then
+    HELM_ARG="$HELM_ARG -f ../${CHART_DIR}/values.yaml"
 fi
-if [ -f ../helm/chart/values-$PREFIX_NAME.yaml ]; then
-    HELM_ARG="$HELM_ARG -f ../helm/chart/values-$PREFIX_NAME.yaml"
+if [ -f ../${CHART_DIR}/values-$PREFIX_NAME.yaml ]; then
+    HELM_ARG="$HELM_ARG -f ../${CHART_DIR}/values-$PREFIX_NAME.yaml"
 else
-    if [ -f ../helm/chart/values-pullrequest.yaml ]; then
-    HELM_ARG="$HELM_ARG -f ../helm/chart/values-pullrequest.yaml"
+    if [ -f ../${CHART_DIR}/values-pullrequest.yaml ]; then
+    HELM_ARG="$HELM_ARG -f ../${CHART_DIR}/values-pullrequest.yaml"
     fi
 fi
 
 # Helm chart information
-if [ ! -f ../helm/chart/HELM_ENV ]; then
-    echo "../helm/chart/HELM_ENV is missing, using local chart instead" 1>&2
-    HELM_CHART_NAME=../helm/chart/
+if [ ! -f ../${CHART_DIR}/HELM_ENV ]; then
+    echo "../${CHART_DIR}/HELM_ENV is missing, using local chart instead" 1>&2
+    HELM_CHART_NAME=../${CHART_DIR}/
 else
-    source ../helm/chart/HELM_ENV
+    source ../${CHART_DIR}/HELM_ENV
     if [ -z "$HELM_CHART_REPO" ]; then
-    echo "Missing HELM_CHART_REPO in ../helm/chart/HELM_ENV file" 1>&2
+    echo "Missing HELM_CHART_REPO in ../${CHART_DIR}/HELM_ENV file" 1>&2
     exit 1
     fi
     if [ -z "$HELM_CHART_NAME" ]; then
-    echo "Missing HELM_CHART_NAME in ../helm/chart/HELM_ENV file" 1>&2
+    echo "Missing HELM_CHART_NAME in ../${CHART_DIR}/HELM_ENV file" 1>&2
     exit 1
     fi
     if [ -z "$HELM_CHART_VERSION" ]; then
-    echo "Missing HELM_CHART_VERSION in ../helm/chart/HELM_ENV file" 1>&2
+    echo "Missing HELM_CHART_VERSION in ../${CHART_DIR}/HELM_ENV file" 1>&2
     exit 1
     fi
 fi
