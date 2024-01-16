@@ -36,7 +36,6 @@ runs:
       # a checkout action of `coopTilleuls/action-helm` must be set with `path: 'action-helm'`
       run: |
         set -e
-        cd action-helm
         bash script.sh
       env:
         PREFIX_NAME: ${{ inputs.PREFIX_NAME }}
