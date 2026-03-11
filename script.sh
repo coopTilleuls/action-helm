@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -ex -o pipefail
 export PREFIX_NAME=$PREFIX_NAME
 
 # set helm values file
